@@ -22,7 +22,7 @@ var body = [];
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
-  console.log(body);
+  //console.log(body);
   // They include information about both the incoming request, such as
   // headers and URL, and about the outgoing response, such as its status
   // and content.
@@ -31,47 +31,33 @@ var requestHandler = function(request, response) {
   // http://nodejs.org/documentation/api/
   var headers = defaultCorsHeaders;
   headers['Content-Type'] = 'text/plain';
-  // Do some basic logging.
-  //
-  // Adding more logging to your server can be an easy way to get passive
-  // debugging help, but you should always be careful about leaving stray
-  // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-  /*
-  if (request.method === 'GET') {
-    let body = [];
-    request.on('data', (block) => {
-      body.push(block);
-    }).on('end', () => {
-      body = Buffer.concat(body).toString();
-      response.end(JSON.stringify(body));
-    });
-  } else {
-    response.statusCode = 404;
-    response.end();
-  }
-  
-  */
-  
   // setup method type filerting of requests
   //if not correct URL
-  if (request.url !== '/classes/messages') {
+  if (request.url.includes('/classes/messages')) {
     //respond with 404! 
-    response.writeHead(404, headers);
-    response.end();
+
     //if GET
-  } else if (request.method === 'GET') {
-    //return data previously stored
-    console.log(body);
-    response.writeHead(200, headers);
-    response.end(JSON.stringify({
-      results: body
-    }));
+    if (request.method === 'GET') {
+      //return data previously stored
+      response.writeHead(200, headers);
+      response.end(JSON.stringify({
+        results: body
+      }));
     //if POST
-  } else if (request.method === 'POST') {
-     //return success and store data
-    body.push(request._postData);
-    response.writeHead(201, headers);
+    } else if (request.method === 'POST') {
+       //return success and store data
+      request.on('data', (chunk) => {
+        body.push(JSON.parse(chunk));
+      });
+      response.writeHead(201, headers);
+      response.end();
+    } else if (request.method === 'OPTIONS') {
+      response.writeHead(200, headers);
+      response.end();
+    }
+  } else {
+    response.writeHead(404, headers);
     response.end();
   }
    
@@ -100,9 +86,10 @@ var requestHandler = function(request, response) {
   //response.write(JSON.stringify(body));
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client
+};
     
   
-};
+
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
 // This code allows this server to talk to websites that
